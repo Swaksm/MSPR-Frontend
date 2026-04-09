@@ -53,12 +53,12 @@ export default function Dashboard() {
   }
 
   // Calculs
-  function calcTotalKcal(meals) {
+  function calcTotalKcal(meals: Array<{ items: Array<{ calories_100g: number; quantite_g: number }> }>): number {
     if (!Array.isArray(meals)) return 0;
-    return meals.reduce((sum, meal) => {
+    return meals.reduce((sum: number, meal) => {
       if (!Array.isArray(meal.items)) return sum;
       return (
-        sum + meal.items.reduce((s, item) => s + (item.calories_100g * item.quantite_g) / 100, 0)
+        sum + meal.items.reduce((s: number, item: { calories_100g: number; quantite_g: number }) => s + (item.calories_100g * item.quantite_g) / 100, 0)
       );
     }, 0);
   }
