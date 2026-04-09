@@ -1,8 +1,9 @@
 "use client";
+
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-// --- Formulaire pour ajouter le repas analysé ---
 function AddAnalyzedMealForm({
   analyzedItems,
   onClose,
@@ -11,7 +12,6 @@ function AddAnalyzedMealForm({
   onClose: () => void;
 }) {
   const [typeRepas, setTypeRepas] = useState("petit_dejeuner");
-  // Mettre la date du jour par défaut (format YYYY-MM-DD)
   const today = new Date().toISOString().slice(0, 10);
   const [dateRepas, setDateRepas] = useState(today);
   const [notes, setNotes] = useState("");
@@ -48,7 +48,7 @@ function AddAnalyzedMealForm({
         }),
       });
       if (!res.ok) throw new Error();
-      setSuccess("Repas ajouté !");
+      setSuccess("Repas ajoute !");
       setTimeout(() => {
         setSuccess("");
         onClose();
@@ -60,101 +60,112 @@ function AddAnalyzedMealForm({
     }
   }
 
-  // Pas de <form> ici — on est déjà dans un <form> parent
   return (
-    <div className="mt-6 space-y-3 bg-gray-50 p-4 rounded">
-      <div className="flex gap-2">
+    <div className="mt-6 space-y-4 bg-secondary p-4 rounded-xl border border-border">
+      <div className="grid grid-cols-2 gap-3">
         <select
           value={typeRepas}
           onChange={(e) => setTypeRepas(e.target.value)}
-          className="flex-1 p-2 border rounded"
+          className="h-12 px-3 bg-background border border-border rounded-xl text-sm"
         >
-          <option value="petit_dejeuner">Petit-déjeuner</option>
-          <option value="dejeuner">Déjeuner</option>
-          <option value="diner">Dîner</option>
+          <option value="petit_dejeuner">Petit-dejeuner</option>
+          <option value="dejeuner">Dejeuner</option>
+          <option value="diner">Diner</option>
           <option value="collation">Collation</option>
         </select>
         <input
           type="date"
           value={dateRepas}
           onChange={(e) => setDateRepas(e.target.value)}
-          className="flex-1 p-2 border rounded"
+          className="h-12 px-3 bg-background border border-border rounded-xl text-sm"
         />
       </div>
       <textarea
-        placeholder="Notes"
+        placeholder="Notes (optionnel)"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full h-20 p-3 bg-background border border-border rounded-xl text-sm resize-none"
       />
-      <div className="flex gap-2">
-        <Button type="button" className="flex-1" disabled={loading} onClick={handleAdd}>
+      <div className="flex gap-3">
+        <Button
+          type="button"
+          className="flex-1 h-12 rounded-xl"
+          disabled={loading}
+          onClick={handleAdd}
+        >
           {loading ? "Ajout..." : "Valider"}
         </Button>
-        <Button type="button" className="flex-1" variant="secondary" onClick={onClose}>
+        <Button
+          type="button"
+          className="flex-1 h-12 rounded-xl"
+          variant="secondary"
+          onClick={onClose}
+        >
           Annuler
         </Button>
       </div>
-      {error && <div className="text-red-500 text-center">{error}</div>}
-      {success && <div className="text-green-600 text-center">{success}</div>}
+      {error && <p className="text-destructive text-sm text-center">{error}</p>}
+      {success && <p className="text-foreground text-sm text-center">{success}</p>}
     </div>
   );
 }
 
-// --- Composant pour afficher le résultat de l'analyse ---
 function AddMealResult({
   result,
 }: {
-  result: { total_kcal: number; message: string; items: any[] };
+  result: { total_kcal: number; message: string; items: { food: string; grams: number; kcal: number }[] };
 }) {
   const [showForm, setShowForm] = useState(false);
 
   return (
-    <div className="mt-4 text-center">
-      <div className="font-semibold">{result.message || "Réponse reçue"}</div>
-      {typeof result.total_kcal !== "undefined" && (
-        <div className="text-lg">
-          Total kcal : <span className="font-bold">{result.total_kcal}</span>
-        </div>
-      )}
-      {Array.isArray(result.items) && result.items.length > 0 ? (
-        <ul className="mt-2">
-          {result.items.map((item, idx) => (
-            <li key={idx}>
-              {item.food} : {item.grams}g, {item.kcal} kcal
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="text-muted-foreground mt-2">Aucun aliment trouvé.</div>
-      )}
+    <div className="mt-6 space-y-4">
+      <div className="p-4 bg-secondary rounded-xl border border-border space-y-3">
+        <p className="font-medium text-foreground">{result.message || "Analyse terminee"}</p>
+        {typeof result.total_kcal !== "undefined" && (
+          <p className="text-2xl font-semibold text-foreground">
+            {result.total_kcal} <span className="text-sm font-normal text-muted-foreground">kcal</span>
+          </p>
+        )}
+        {Array.isArray(result.items) && result.items.length > 0 ? (
+          <ul className="space-y-2">
+            {result.items.map((item, idx) => (
+              <li key={idx} className="flex justify-between text-sm">
+                <span className="text-foreground">{item.food}</span>
+                <span className="text-muted-foreground">{item.grams}g - {item.kcal} kcal</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground text-sm">Aucun aliment trouve.</p>
+        )}
+      </div>
+
       {!showForm && Array.isArray(result.items) && result.items.length > 0 && (
-        <Button type="button" className="mt-4" onClick={() => setShowForm(true)}>
-          Ajouter ce repas à mon journal
+        <Button
+          type="button"
+          className="w-full h-12 rounded-xl"
+          onClick={() => setShowForm(true)}
+        >
+          Ajouter ce repas
         </Button>
       )}
+
       {showForm && (
         <AddAnalyzedMealForm
           analyzedItems={result.items}
           onClose={() => setShowForm(false)}
         />
       )}
-      {!Array.isArray(result.items) && (
-        <pre className="mt-4 text-xs bg-gray-100 p-2 rounded text-left">
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
     </div>
   );
 }
 
-// --- Page principale ---
 export default function AddMealPage() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<null | {
     total_kcal: number;
     message: string;
-    items: any[];
+    items: { food: string; grams: number; kcal: number }[];
   }>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -178,7 +189,7 @@ export default function AddMealPage() {
       if (!res.ok) throw new Error("Erreur lors de l'analyse du repas");
       const data = await res.json();
       setResult(data);
-    } catch (err) {
+    } catch {
       setError("Erreur lors de l'analyse du repas");
     } finally {
       setLoading(false);
@@ -186,33 +197,53 @@ export default function AddMealPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-      <form
-        onSubmit={handleAnalyze}
-        className="space-y-6 w-full max-w-md bg-white/80 p-8 rounded-xl shadow"
-      >
-        <h2 className="text-2xl font-bold mb-4 text-center">
-          Analyser un repas
-        </h2>
-        <textarea
-          className="w-full h-24 p-2 border rounded"
-          placeholder="Décris ton repas en anglais..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          required
-        />
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Analyse..." : "Analyser"}
-        </Button>
-        {error && <div className="text-red-500 text-center">{error}</div>}
-        {result && <AddMealResult result={result} />}
-        <a
-          href="/dashboard"
-          className="block mt-4 text-center text-primary underline"
-        >
-          Retour au menu
-        </a>
-      </form>
+    <main className="min-h-screen flex flex-col bg-background">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <Link href="/dashboard" className="text-lg font-semibold tracking-tight text-foreground">
+          Jarmy
+        </Link>
+      </header>
+
+      {/* Content */}
+      <section className="flex-1 flex flex-col px-6 py-8">
+        <div className="max-w-md mx-auto w-full space-y-6">
+          {/* Title */}
+          <div className="space-y-1">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+              Analyser un repas
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Decrivez votre repas pour obtenir une estimation calorique
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleAnalyze} className="space-y-4">
+            <textarea
+              className="w-full h-32 p-4 bg-background border border-border rounded-xl text-sm resize-none placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Ex: 200g de riz, 150g de poulet grille, salade verte..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full h-12 rounded-xl" disabled={loading}>
+              {loading ? "Analyse en cours..." : "Analyser"}
+            </Button>
+          </form>
+
+          {error && <p className="text-destructive text-sm text-center">{error}</p>}
+          {result && <AddMealResult result={result} />}
+
+          {/* Back link */}
+          <Link
+            href="/dashboard"
+            className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Retour au menu
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

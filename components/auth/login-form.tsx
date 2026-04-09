@@ -40,9 +40,9 @@ export function LoginForm() {
           router.push("/dashboard")
         }, 800)
       } else {
-        setError(data.detail || data.message || "Connexion refusée")
+        setError(data.detail || data.message || "Connexion refusee")
       }
-    } catch (err) {
+    } catch {
       setError("Erreur de connexion au serveur")
     } finally {
       setIsLoading(false)
@@ -58,7 +58,7 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="h-12 rounded-xl bg-card border-border/50 focus:border-primary"
+          className="h-12 rounded-xl bg-background border-border focus:ring-2 focus:ring-ring"
         />
         <Input
           type="password"
@@ -67,7 +67,7 @@ export function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
-          className="h-12 rounded-xl bg-card border-border/50 focus:border-primary"
+          className="h-12 rounded-xl bg-background border-border focus:ring-2 focus:ring-ring"
         />
       </div>
 
@@ -75,7 +75,7 @@ export function LoginForm() {
         <p className="text-sm text-destructive text-center">{error}</p>
       )}
       {success && (
-        <p className="text-sm text-primary text-center">{success}</p>
+        <p className="text-sm text-foreground text-center font-medium">{success}</p>
       )}
 
       <Button

@@ -1,19 +1,45 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-function calcTotalKcal(items: any[]): number {
+interface MealItem {
+  aliment_nom: string;
+  quantite_g: number;
+  calories_100g: number;
+}
+
+interface Meal {
+  id: number;
+  type_repas: string;
+  date_repas: string;
+  notes?: string;
+  items: MealItem[];
+}
+
+function calcTotalKcal(items: MealItem[]): number {
   if (!Array.isArray(items)) return 0;
   return Math.round(
     items.reduce((sum, item) => sum + (item.calories_100g * item.quantite_g) / 100, 0)
   );
 }
 
+function formatTypeRepas(type: string): string {
+  const labels: Record<string, string> = {
+    petit_dejeuner: "Petit-dejeuner",
+    dejeuner: "Dejeuner",
+    diner: "Diner",
+    collation: "Collation",
+  };
+  return labels[type] || type;
+}
+
 export default function MealsPage() {
-  const [meals, setMeals] = useState<any[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedMeal, setSelectedMeal] = useState<any | null>(null);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -24,7 +50,6 @@ export default function MealsPage() {
     fetch(`http://localhost:8003/users/${userId}/meals`)
       .then((res) => res.json())
       .then((data) => {
-        // L'API peut renvoyer un tableau direct ou { meals: [...] }
         const list = Array.isArray(data) ? data : (data.meals ?? data.items ?? []);
         setMeals(list);
       })
@@ -32,9 +57,10 @@ export default function MealsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleShowDetails = (meal: any) => {
+  const handleShowDetails = (meal: Meal) => {
     setSelectedMeal(meal);
     setShowPopup(true);
+    setDeleteError("");
   };
 
   const handleDelete = async (mealId: number) => {
@@ -53,87 +79,151 @@ export default function MealsPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-      <div className="w-full max-w-2xl bg-white/80 p-8 rounded-xl shadow">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Mes repas</h2>
-          <a
-            href="/dashboard/manual-meal"
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-accent transition-colors"
-          >
-            Ajouter
-          </a>
-        </div>
-        {loading ? (
-          <div>Chargement...</div>
-        ) : error ? (
-          <div className="text-red-500">{error}</div>
-        ) : meals.length === 0 ? (
-          <div>Aucun repas trouvé.</div>
-        ) : (
-          <ul className="divide-y">
-            {meals.map((meal) => (
-              <li
-                key={meal.id}
-                className="py-3 cursor-pointer hover:bg-accent/20 rounded transition"
-                onClick={() => handleShowDetails(meal)}
-              >
-                <div className="flex justify-between items-center">
-                  <span>
-                    {meal.type_repas} - {meal.date_repas}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {calcTotalKcal(meal.items)} kcal
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <a
-          href="/dashboard"
-          className="block mt-6 text-center text-primary underline"
+    <main className="min-h-screen flex flex-col bg-background">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <Link href="/dashboard" className="text-lg font-semibold tracking-tight text-foreground">
+          Jarmy
+        </Link>
+        <Link
+          href="/dashboard/manual-meal"
+          className="text-sm font-medium text-foreground hover:text-muted-foreground transition-colors"
         >
-          Retour au menu
-        </a>
-      </div>
+          Ajouter
+        </Link>
+      </header>
 
-      {showPopup && selectedMeal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
-            <button
-              onClick={() => setShowPopup(false)}
-              className="absolute top-2 right-2 text-xl"
-            >
-              ×
-            </button>
-            <h3 className="text-xl font-bold mb-2">Détails du repas</h3>
-            <div>Date : {selectedMeal.date_repas}</div>
-            <div>Type : {selectedMeal.type_repas}</div>
-            <div>Total kcal : {calcTotalKcal(selectedMeal.items)}</div>
-            <div className="mt-2 mb-2">Notes : {selectedMeal.notes || "-"}</div>
-            <ul className="mb-4">
-              {selectedMeal.items.map((item: any, idx: number) => {
-                const kcal = Math.round((item.calories_100g * item.quantite_g) / 100);
-                return (
-                  <li key={idx}>
-                    {item.aliment_nom} : {item.quantite_g}g →{" "}
-                    <span className="font-medium">{kcal} kcal</span>
-                    <span className="text-muted-foreground text-sm ml-1">
-                      ({item.calories_100g} kcal/100g)
-                    </span>
-                  </li>
-                );
-              })}
+      {/* Content */}
+      <section className="flex-1 flex flex-col px-6 py-8">
+        <div className="max-w-md mx-auto w-full space-y-6">
+          {/* Title */}
+          <div className="space-y-1">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">Mes repas</h1>
+            <p className="text-muted-foreground text-sm">Historique de vos repas enregistres</p>
+          </div>
+
+          {/* List */}
+          {loading ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground text-sm">Chargement...</p>
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center">
+              <p className="text-destructive text-sm">{error}</p>
+            </div>
+          ) : meals.length === 0 ? (
+            <div className="py-12 text-center space-y-4">
+              <p className="text-muted-foreground text-sm">Aucun repas enregistre</p>
+              <Link
+                href="/dashboard/manual-meal"
+                className="inline-flex items-center justify-center h-10 px-6 bg-primary text-primary-foreground text-sm font-medium rounded-xl transition-opacity hover:opacity-90"
+              >
+                Ajouter un repas
+              </Link>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {meals.map((meal) => (
+                <li
+                  key={meal.id}
+                  className="p-4 bg-card border border-border rounded-xl cursor-pointer hover:bg-muted transition-colors active:scale-[0.99]"
+                  onClick={() => handleShowDetails(meal)}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-foreground text-sm">
+                        {formatTypeRepas(meal.type_repas)}
+                      </p>
+                      <p className="text-muted-foreground text-xs">{meal.date_repas}</p>
+                    </div>
+                    <p className="font-semibold text-foreground">{calcTotalKcal(meal.items)} kcal</p>
+                  </div>
+                </li>
+              ))}
             </ul>
+          )}
+
+          {/* Back link */}
+          <Link
+            href="/dashboard"
+            className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Retour au menu
+          </Link>
+        </div>
+      </section>
+
+      {/* Popup */}
+      {showPopup && selectedMeal && (
+        <div
+          className="fixed inset-0 bg-foreground/40 flex items-end sm:items-center justify-center z-50 p-4"
+          onClick={() => setShowPopup(false)}
+        >
+          <div
+            className="bg-background w-full max-w-md rounded-2xl p-6 space-y-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Details du repas</h2>
+              <button
+                onClick={() => setShowPopup(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Info */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Date</span>
+                <span className="text-foreground">{selectedMeal.date_repas}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Type</span>
+                <span className="text-foreground">{formatTypeRepas(selectedMeal.type_repas)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total</span>
+                <span className="text-foreground font-semibold">{calcTotalKcal(selectedMeal.items)} kcal</span>
+              </div>
+              {selectedMeal.notes && (
+                <div className="pt-2 border-t border-border">
+                  <span className="text-muted-foreground">Notes: </span>
+                  <span className="text-foreground">{selectedMeal.notes}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Items */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Aliments</p>
+              <ul className="space-y-2">
+                {selectedMeal.items.map((item, idx) => {
+                  const kcal = Math.round((item.calories_100g * item.quantite_g) / 100);
+                  return (
+                    <li key={idx} className="flex justify-between text-sm">
+                      <span className="text-foreground">{item.aliment_nom}</span>
+                      <span className="text-muted-foreground">{item.quantite_g}g - {kcal} kcal</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            {/* Delete */}
             <Button
               onClick={() => handleDelete(selectedMeal.id)}
               disabled={deleting}
-              className="bg-destructive text-white w-full mb-2"
+              variant="destructive"
+              className="w-full h-12 rounded-xl"
             >
-              {deleting ? "Suppression..." : "Supprimer"}
+              {deleting ? "Suppression..." : "Supprimer ce repas"}
             </Button>
-            {deleteError && <div className="text-red-500 text-center text-sm">{deleteError}</div>}
+            {deleteError && <p className="text-destructive text-sm text-center">{deleteError}</p>}
           </div>
         </div>
       )}
