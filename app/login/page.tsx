@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { Salad, ArrowLeft } from "lucide-react"
 import { LoginForm } from "@/components/auth/login-form"
 import { RegisterForm } from "@/components/auth/register-form"
 
@@ -11,60 +12,85 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="flex items-center px-6 py-4 border-b border-border">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-foreground">
-          Jarmy
+      <header className="flex items-center justify-between px-5 py-4 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+        <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Retour</span>
         </Link>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+            <Salad className="w-4 h-4 text-primary-foreground" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight text-foreground">Jarmy</span>
+        </div>
+        <div className="w-16" />
       </header>
 
       {/* Content */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+      <section className="flex-1 flex flex-col items-center justify-center px-5 py-8 animate-fade-in">
         <div className="w-full max-w-sm space-y-8">
+          {/* Icon */}
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center">
+              <Salad className="w-8 h-8 text-primary" />
+            </div>
+          </div>
+
           {/* Title */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {isLogin ? "Connexion" : "Creer un compte"}
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {isLogin ? "Bon retour !" : "Rejoignez Jarmy"}
             </h1>
             <p className="text-muted-foreground text-sm">
               {isLogin
-                ? "Connectez-vous pour acceder a votre espace"
-                : "Rejoignez Jarmy pour suivre votre nutrition"}
+                ? "Connectez-vous pour continuer votre suivi"
+                : "Creez votre compte pour commencer"}
             </p>
           </div>
 
-          {/* Form */}
-          {isLogin ? (
-            <LoginForm />
-          ) : (
-            <RegisterForm onSuccess={() => setIsLogin(true)} />
-          )}
-
-          {/* Toggle */}
-          <div className="text-center pt-4 border-t border-border">
+          {/* Tabs */}
+          <div className="flex gap-1 p-1 bg-secondary rounded-xl">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground"
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                isLogin
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              {isLogin ? (
-                <>
-                  Pas encore de compte ?{" "}
-                  <span className="text-foreground font-medium underline underline-offset-4">
-                    S&apos;inscrire
-                  </span>
-                </>
-              ) : (
-                <>
-                  Deja un compte ?{" "}
-                  <span className="text-foreground font-medium underline underline-offset-4">
-                    Se connecter
-                  </span>
-                </>
-              )}
+              Connexion
             </button>
+            <button
+              type="button"
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                !isLogin
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Inscription
+            </button>
+          </div>
+
+          {/* Form */}
+          <div className="animate-scale-in">
+            {isLogin ? (
+              <LoginForm />
+            ) : (
+              <RegisterForm onSuccess={() => setIsLogin(true)} />
+            )}
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="px-5 py-4">
+        <p className="text-center text-xs text-muted-foreground">
+          En continuant, vous acceptez nos conditions d&apos;utilisation
+        </p>
+      </footer>
     </main>
   )
 }
