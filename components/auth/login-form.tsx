@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
@@ -10,13 +11,12 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
     setError("")
-    setSuccess("")
 
     try {
       const response = await fetch("http://localhost:8004/login", {
@@ -30,17 +30,19 @@ export function LoginForm() {
       const data = await response.json()
 
       if (data.success) {
-        setSuccess(data.message)
-        // Stocker les infos utilisateur si nécessaire
+        // Stocker les infos utilisateur
         if (data.user_id && data.email) {
           localStorage.setItem("user_id", data.user_id)
           localStorage.setItem("user_email", data.email)
+          if (data.nom) localStorage.setItem("user_nom", data.nom)
+          if (data.prenom) localStorage.setItem("user_prenom", data.prenom)
         }
-        console.log("[v0] Login success:", data)
+        // Redirection vers le dashboard
+        router.push("/dashboard")
       } else {
         setError(data.detail || data.message || "Connexion refusée")
       }
-    } catch (err) {
+    } catch {
       setError("Erreur de connexion au serveur")
     } finally {
       setIsLoading(false)
@@ -71,9 +73,6 @@ export function LoginForm() {
 
       {error && (
         <p className="text-sm text-destructive text-center">{error}</p>
-      )}
-      {success && (
-        <p className="text-sm text-primary text-center">{success}</p>
       )}
 
       <Button
