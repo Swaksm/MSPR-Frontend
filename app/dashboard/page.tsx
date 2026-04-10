@@ -18,6 +18,8 @@ import {
 export default function Dashboard() {
   const [userName, setUserName] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +31,17 @@ export default function Dashboard() {
     }
     const name = localStorage.getItem("user_name") || "Utilisateur";
     setUserName(name.split(" ")[0]);
+
+    // Fetch meals for stats
+    setLoading(true);
+    fetch(`http://localhost:8003/users/${userId}/meals`)
+      .then((res) => res.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.meals ?? data.items ?? []);
+        setMeals(list);
+      })
+      .catch(() => setMeals([]))
+      .finally(() => setLoading(false));
   }, [router]);
 
   if (!mounted) return null;
@@ -38,6 +51,19 @@ export default function Dashboard() {
     localStorage.removeItem("user_name");
     router.replace("/login");
   }
+
+  // Calculs
+  function calcTotalKcal(meals: Array<{ items: Array<{ calories_100g: number; quantite_g: number }> }>): number {
+    if (!Array.isArray(meals)) return 0;
+    return meals.reduce((sum: number, meal) => {
+      if (!Array.isArray(meal.items)) return sum;
+      return (
+        sum + meal.items.reduce((s: number, item: { calories_100g: number; quantite_g: number }) => s + (item.calories_100g * item.quantite_g) / 100, 0)
+      );
+    }, 0);
+  }
+  const totalCalories = Math.round(calcTotalKcal(meals));
+  const totalRepas = meals.length;
 
   const currentHour = new Date().getHours();
   const greeting =
@@ -77,13 +103,13 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-3">
             <StatCard
               icon={<Flame className="w-4 h-4" />}
-              value="0"
+              value={loading ? "..." : totalCalories.toString()}
               label="Calories"
               color="primary"
             />
             <StatCard
               icon={<TrendingUp className="w-4 h-4" />}
-              value="0"
+              value={loading ? "..." : totalRepas.toString()}
               label="Repas"
               color="success"
             />
