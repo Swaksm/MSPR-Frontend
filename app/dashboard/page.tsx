@@ -65,18 +65,30 @@ export default function Dashboard() {
     router.replace("/login");
   }
 
-  // Calculs
-  function calcTotalKcal(meals: Array<{ items: Array<{ calories_calculees: number; quantite_g: number }> }>): number {
-    if (!Array.isArray(meals)) return 0;
-    return meals.reduce((sum: number, meal) => {
+  // Filtrer les repas d'aujourd'hui
+  const today = new Date().toISOString().split('T')[0];
+  const todayMeals = meals.filter((meal: any) => {
+    // Le backend renvoie date_repas au format YYYY-MM-DD
+    return meal.date_repas === today;
+  });
+
+  // Calculs pour AUJOURD'HUI
+  function calcTodayKcal(mealsList: any[]): number {
+    return mealsList.reduce((sum, meal) => {
+      // Utiliser total_calories s'il existe (renvoyé par l'API meal)
+      if (meal.total_calories !== undefined) {
+        return sum + Number(meal.total_calories);
+      }
+      // Fallback sur le calcul manuel des items
       if (!Array.isArray(meal.items)) return sum;
       return (
-        sum + meal.items.reduce((s: number, item: { calories_calculees: number; quantite_g: number }) => s + Number(item.calories_calculees), 0)
+        sum + meal.items.reduce((s: number, item: any) => s + Number(item.calories_calculees || 0), 0)
       );
     }, 0);
   }
-  const totalCalories = Math.round(calcTotalKcal(meals));
-  const totalRepas = meals.length;
+
+  const todayCalories = Math.round(calcTodayKcal(todayMeals));
+  const todayRepasCount = todayMeals.length;
 
   const currentHour = new Date().getHours();
   const greeting =
@@ -116,13 +128,13 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-3">
             <StatCard
               icon={<Flame className="w-4 h-4" />}
-              value={loading ? "..." : totalCalories.toString()}
+              value={loading ? "..." : todayCalories.toString()}
               label="Calories"
               color="primary"
             />
             <StatCard
               icon={<TrendingUp className="w-4 h-4" />}
-              value={loading ? "..." : totalRepas.toString()}
+              value={loading ? "..." : todayRepasCount.toString()}
               label="Repas"
               color="success"
             />
@@ -223,12 +235,12 @@ function StatCard({
   };
 
   return (
-    <div className="p-3 bg-card rounded-2xl border border-border h-full">
-      <div className={`w-8 h-8 rounded-xl ${colors[color]} flex items-center justify-center mb-2`}>
+    <div className="p-3 bg-card rounded-2xl border border-border h-full text-center">
+      <div className={`w-8 h-8 rounded-xl ${colors[color]} flex items-center justify-center mb-2 mx-auto`}>
         {icon}
       </div>
       <p className="text-xl font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-[10px] uppercase font-medium text-muted-foreground tracking-tight">{label}</p>
     </div>
   );
 }
