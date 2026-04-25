@@ -66,9 +66,8 @@ export default function Dashboard() {
   }
 
   // Filtrer les repas d'aujourd'hui
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA'); // Format YYYY-MM-DD local
   const todayMeals = meals.filter((meal: any) => {
-    // Le backend renvoie date_repas au format YYYY-MM-DD
     return meal.date_repas === today;
   });
 
