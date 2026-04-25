@@ -14,27 +14,40 @@ import {
   TrendingUp,
   Target,
 } from "lucide-react";
+import { DailyGoal } from "@/components/dashboard/daily-goal";
 
 export default function Dashboard() {
   const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [meals, setMeals] = useState([]);
+  const [kcalGoal, setKcalGoal] = useState(2000);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
-    const userId = localStorage.getItem("user_id");
-    if (!userId) {
+    const storedUserId = localStorage.getItem("user_id");
+    if (!storedUserId) {
       router.replace("/login");
       return;
     }
+    const id = parseInt(storedUserId);
+    setUserId(id);
     const name = localStorage.getItem("user_name") || "Utilisateur";
     setUserName(name.split(" ")[0]);
 
+    // Fetch user data for goal
+    fetch(`http://localhost:8000/auth/users/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.kcal_objectif) setKcalGoal(data.kcal_objectif);
+      })
+      .catch(err => console.error("Error fetching user goal", err));
+
     // Fetch meals for stats
     setLoading(true);
-    fetch(`http://localhost:8003/users/${userId}/meals`)
+    fetch(`http://localhost:8000/meal/users/${id}/meals`)
       .then((res) => res.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : (data.meals ?? data.items ?? []);
@@ -53,12 +66,12 @@ export default function Dashboard() {
   }
 
   // Calculs
-  function calcTotalKcal(meals: Array<{ items: Array<{ calories_100g: number; quantite_g: number }> }>): number {
+  function calcTotalKcal(meals: Array<{ items: Array<{ calories_calculees: number; quantite_g: number }> }>): number {
     if (!Array.isArray(meals)) return 0;
     return meals.reduce((sum: number, meal) => {
       if (!Array.isArray(meal.items)) return sum;
       return (
-        sum + meal.items.reduce((s: number, item: { calories_100g: number; quantite_g: number }) => s + (item.calories_100g * item.quantite_g) / 100, 0)
+        sum + meal.items.reduce((s: number, item: { calories_calculees: number; quantite_g: number }) => s + Number(item.calories_calculees), 0)
       );
     }, 0);
   }
@@ -67,7 +80,7 @@ export default function Dashboard() {
 
   const currentHour = new Date().getHours();
   const greeting =
-    currentHour < 12 ? "Bonjour" : currentHour < 18 ? "Bon apres-midi" : "Bonsoir";
+    currentHour < 12 ? "Bonjour" : currentHour < 18 ? "Bon après-midi" : "Bonsoir";
 
   return (
     <main className="min-h-screen flex flex-col bg-background">
@@ -84,7 +97,7 @@ export default function Dashboard() {
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          <span className="hidden sm:inline">Deconnexion</span>
+          <span className="hidden sm:inline">Déconnexion</span>
         </button>
       </header>
 
@@ -115,11 +128,20 @@ export default function Dashboard() {
             />
             <StatCard
               icon={<Target className="w-4 h-4" />}
-              value="--"
+              value={loading ? "..." : kcalGoal.toString()}
               label="Objectif"
               color="warning"
             />
           </div>
+
+          {/* Goal Management */}
+          {userId && (
+            <DailyGoal 
+              userId={userId} 
+              initialGoal={kcalGoal} 
+              onGoalUpdated={(newGoal) => setKcalGoal(newGoal)}
+            />
+          )}
 
           {/* Quick Actions */}
           <div className="space-y-3">
@@ -144,7 +166,7 @@ export default function Dashboard() {
                 href="/dashboard/meals"
                 icon={<History className="w-5 h-5" />}
                 title="Historique"
-                description="Consultez vos repas enregistres"
+                description="Consultez vos repas enregistrés"
               />
             </nav>
           </div>
@@ -158,7 +180,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">Conseil du jour</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Pensez a boire au moins 2 litres d&apos;eau par jour pour maintenir une bonne hydratation.
+                  Pensez à boire au moins 2 litres d&apos;eau par jour pour maintenir une bonne hydratation.
                 </p>
               </div>
             </div>
