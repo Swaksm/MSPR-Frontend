@@ -126,22 +126,29 @@ export default function Dashboard() {
               label="Repas"
               color="success"
             />
-            <StatCard
-              icon={<Target className="w-4 h-4" />}
-              value={loading ? "..." : kcalGoal.toString()}
-              label="Objectif"
-              color="warning"
-            />
+            
+            {userId ? (
+              <DailyGoal 
+                userId={userId} 
+                initialGoal={kcalGoal} 
+                onGoalUpdated={(newGoal) => setKcalGoal(newGoal)}
+              >
+                <StatCard
+                  icon={<Target className="w-4 h-4" />}
+                  value={loading ? "..." : kcalGoal.toString()}
+                  label="Objectif"
+                  color="warning"
+                />
+              </DailyGoal>
+            ) : (
+              <StatCard
+                icon={<Target className="w-4 h-4" />}
+                value="..."
+                label="Objectif"
+                color="warning"
+              />
+            )}
           </div>
-
-          {/* Goal Management */}
-          {userId && (
-            <DailyGoal 
-              userId={userId} 
-              initialGoal={kcalGoal} 
-              onGoalUpdated={(newGoal) => setKcalGoal(newGoal)}
-            />
-          )}
 
           {/* Quick Actions */}
           <div className="space-y-3">
@@ -216,7 +223,7 @@ function StatCard({
   };
 
   return (
-    <div className="p-3 bg-card rounded-2xl border border-border">
+    <div className="p-3 bg-card rounded-2xl border border-border h-full">
       <div className={`w-8 h-8 rounded-xl ${colors[color]} flex items-center justify-center mb-2`}>
         {icon}
       </div>

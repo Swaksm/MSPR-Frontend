@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Target, Edit2, Check, X } from "lucide-react";
+import { Target, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const AUTH_API_URL = "http://localhost:8000/auth";
@@ -13,18 +21,17 @@ interface DailyGoalProps {
   userId: number;
   initialGoal: number;
   onGoalUpdated?: (newGoal: number) => void;
+  children: React.ReactNode;
 }
 
-export function DailyGoal({ userId, initialGoal, onGoalUpdated }: DailyGoalProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [goal, setGoal] = useState(initialGoal);
+export function DailyGoal({ userId, initialGoal, onGoalUpdated, children }: DailyGoalProps) {
+  const [open, setOpen] = useState(false);
   const [tempGoal, setTempGoal] = useState(initialGoal);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setGoal(initialGoal);
     setTempGoal(initialGoal);
-  }, [initialGoal]);
+  }, [initialGoal, open]);
 
   const handleSave = async () => {
     if (tempGoal < 500 || tempGoal > 10000) {
@@ -41,10 +48,9 @@ export function DailyGoal({ userId, initialGoal, onGoalUpdated }: DailyGoalProps
       });
 
       if (res.ok) {
-        setGoal(tempGoal);
-        setIsEditing(false);
         toast.success("Objectif mis à jour !");
         if (onGoalUpdated) onGoalUpdated(tempGoal);
+        setOpen(false);
       } else {
         toast.error("Erreur lors de la mise à jour");
       }
@@ -56,73 +62,51 @@ export function DailyGoal({ userId, initialGoal, onGoalUpdated }: DailyGoalProps
   };
 
   return (
-    <Card className="overflow-hidden border-primary/20 bg-primary/5">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-              <Target className="w-5 h-5" />
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <div className="cursor-pointer transition-transform active:scale-95">
+          {children}
+        </div>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <Target className="w-4 h-4" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Objectif quotidien</p>
-              {isEditing ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    value={tempGoal}
-                    onChange={(e) => setTempGoal(parseInt(e.target.value) || 0)}
-                    className="w-24 h-8 text-lg font-bold"
-                    min={500}
-                    max={10000}
-                  />
-                  <span className="text-sm font-semibold text-foreground">kcal</span>
-                </div>
-              ) : (
-                <p className="text-xl font-bold text-foreground">
-                  {goal} <span className="text-sm font-normal text-muted-foreground">kcal / jour</span>
-                </p>
-              )}
-            </div>
+            <DialogTitle>Objectif quotidien</DialogTitle>
           </div>
-
-          <div className="flex items-center gap-1">
-            {isEditing ? (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                  onClick={handleSave}
-                  disabled={loading}
-                >
-                  <Check className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                  onClick={() => {
-                    setTempGoal(goal);
-                    setIsEditing(false);
-                  }}
-                  disabled={loading}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </>
-            ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit2 className="w-4 h-4" />
-              </Button>
-            )}
+          <DialogDescription>
+            Définissez votre cible de calories journalière pour adapter votre suivi nutritionnel.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1 space-y-2">
+              <label htmlFor="goal" className="text-sm font-medium leading-none">
+                Calories (kcal)
+              </label>
+              <Input
+                id="goal"
+                type="number"
+                value={tempGoal}
+                onChange={(e) => setTempGoal(parseInt(e.target.value) || 0)}
+                className="col-span-3 text-lg font-bold"
+                min={500}
+                max={10000}
+              />
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        <DialogFooter className="flex flex-row gap-2 sm:justify-end">
+          <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>
+            Annuler
+          </Button>
+          <Button onClick={handleSave} disabled={loading} className="gap-2">
+            {loading ? "Mise à jour..." : "Enregistrer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
