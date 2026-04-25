@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Target, Edit2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,11 @@ export function DailyGoal({ userId, initialGoal, onGoalUpdated }: DailyGoalProps
   const [goal, setGoal] = useState(initialGoal);
   const [tempGoal, setTempGoal] = useState(initialGoal);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setGoal(initialGoal);
+    setTempGoal(initialGoal);
+  }, [initialGoal]);
 
   const handleSave = async () => {
     if (tempGoal < 500 || tempGoal > 10000) {
