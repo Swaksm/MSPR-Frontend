@@ -21,7 +21,7 @@ export function LoginForm() {
     setSuccess("")
 
     try {
-      const response = await fetch("http://localhost:8004/login", {
+      const response = await fetch("http://localhost:8000/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -34,7 +34,7 @@ export function LoginForm() {
       if (data.success && data.user_id) {
         localStorage.setItem("user_id", String(data.user_id))
         localStorage.setItem("user_email", data.email ?? email)
-        localStorage.setItem("user_name", data.user_name ?? data.email ?? email)
+        localStorage.setItem("user_name", data.prenom ?? data.email ?? email)
         setSuccess(data.message)
         setTimeout(() => {
           router.push("/dashboard")
