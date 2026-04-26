@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Salad, Users, Utensils, Trash2, LogOut, ChevronRight, ChevronDown, Calendar, Ruler, Weight, BadgeInfo } from "lucide-react";
+import { Salad, Users, Utensils, Trash2, LogOut, ChevronRight, ChevronDown, Calendar, Ruler, Weight, BadgeInfo, Database } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,10 +190,18 @@ export default function AdminPage() {
           <Salad className="w-5 h-5 text-primary" />
           <span className="font-semibold text-lg">Admin Dashboard</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setIsLoggedIn(false)} className="gap-2">
-          <LogOut className="w-4 h-4" />
-          Déconnexion
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" asChild className="gap-2 border-primary/20 hover:bg-primary/5 text-primary">
+            <a href="http://localhost:8080" target="_blank" rel="noopener noreferrer">
+              <Database className="w-4 h-4" />
+              Base de données
+            </a>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setIsLoggedIn(false)} className="gap-2 text-muted-foreground">
+            <LogOut className="w-4 h-4" />
+            Déconnexion
+          </Button>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 pt-8">

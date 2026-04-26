@@ -86,10 +86,16 @@ export default function LoginPage() {
       </section>
 
       {/* Footer */}
-      <footer className="px-5 py-4">
+      <footer className="px-5 py-4 relative">
         <p className="text-center text-xs text-muted-foreground">
           En continuant, vous acceptez nos conditions d&apos;utilisation
         </p>
+        <Link 
+          href="/admin" 
+          className="absolute bottom-4 right-5 text-[10px] text-muted-foreground/20 hover:text-muted-foreground transition-colors"
+        >
+          Admin
+        </Link>
       </footer>
     </main>
   )
