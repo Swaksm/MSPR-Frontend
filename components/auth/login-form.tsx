@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Mail, Lock, ArrowRight, Check } from "lucide-react"
 import { useTranslation } from "@/lib/i18n-context"
 import { apiFetch } from "@/lib/api"
+import { GoogleLogin } from "@react-oauth/google"
 
 export function LoginForm() {
   const router = useRouter();
@@ -16,6 +17,36 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const response = await apiFetch("http://localhost:8000/auth/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        localStorage.setItem("user_id", String(data.user_id));
+        localStorage.setItem("user_email", data.email);
+        localStorage.setItem("user_name", data.prenom && data.nom ? `${data.prenom} ${data.nom}` : data.email);
+        localStorage.setItem("user_abonnement", data.abonnement || "freemium");
+        
+        setSuccess("Connexion Google réussie !");
+        setTimeout(() => {
+            router.push("/dashboard");
+        }, 1000);
+      } else {
+        setError(data.detail || "Erreur Google Login");
+      }
+    } catch {
+      setError("Erreur serveur lors du login Google");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -110,6 +141,27 @@ export function LoginForm() {
           </>
         )}
       </Button>
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border"></div>
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">OU</span>
+        </div>
+      </div>
+
+      <div className="flex justify-center w-full overflow-hidden">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => setError("Google Login Failed")}
+          theme="filled_blue"
+          shape="pill"
+          size="large"
+          text="signin_with"
+          width="360"
+        />
+      </div>
     </form>
   )
 }
