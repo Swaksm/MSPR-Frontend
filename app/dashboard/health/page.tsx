@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Activity, Heart, Moon, Scale, Watch, AlertCircle, Plus, Bluetooth
+  Activity, Heart, Moon, Scale, Watch, AlertCircle, Plus, Bluetooth, Dumbbell, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -196,6 +196,25 @@ export default function HealthDashboardPage() {
                 </>
               )}
             </>
+          )}
+
+
+          {/* Fitness IA — visible dès Premium */}
+          {isPremiumPlus !== null && (
+            <Link href="/dashboard/fitness" className="block">
+              <div className="flex items-center justify-between p-4 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all active:scale-[0.99]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Dumbbell className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{t("fitness_title")}</p>
+                    <p className="text-xs text-muted-foreground">{t("fitness_subtitle")}</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </div>
+            </Link>
           )}
         </div>
       </section>

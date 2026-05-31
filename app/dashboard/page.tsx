@@ -13,6 +13,7 @@ import {
   Watch,
   TrendingUp,
   Target,
+  Dumbbell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n-context";
@@ -241,22 +242,46 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* Actions Rapides */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/dashboard/manual-meal" className="contents">
-            <button className="flex flex-col items-center justify-center p-5 bg-card border border-border rounded-3xl gap-3 hover:border-primary/50 transition-all active:scale-95">
-              <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground">
-                <Plus className="w-6 h-6" />
+        {/* Bannière Fitness IA — Premium uniquement */}
+        {abonnement !== "freemium" && (
+          <Link href="/dashboard/fitness" className="block">
+            <div className="relative overflow-hidden flex items-center gap-4 p-4 bg-card border border-border rounded-3xl hover:border-primary/50 transition-all active:scale-[0.99]">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Dumbbell className="w-6 h-6 text-primary" />
               </div>
-              <span className="text-sm font-bold">{t("dashboard_manual_entry")}</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">{t("fitness_title")}</p>
+                <p className="text-xs text-muted-foreground truncate">{t("fitness_subtitle")}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+            </div>
+          </Link>
+        )}
+
+        {/* Actions Rapides */}
+        <div className="grid grid-cols-3 gap-3">
+          <Link href="/dashboard/manual-meal" className="contents">
+            <button className="flex flex-col items-center justify-center p-4 bg-card border border-border rounded-3xl gap-2 hover:border-primary/50 transition-all active:scale-95">
+              <div className="w-11 h-11 rounded-2xl bg-secondary flex items-center justify-center text-foreground">
+                <Plus className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-center leading-tight">{t("dashboard_manual_entry")}</span>
             </button>
           </Link>
           <Link href="/dashboard/add-meal" className="contents">
-            <button className="flex flex-col items-center justify-center p-5 bg-card border border-border rounded-3xl gap-3 hover:border-primary/50 transition-all active:scale-95">
-              <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center text-primary">
-                <Sparkles className="w-6 h-6" />
+            <button className="flex flex-col items-center justify-center p-4 bg-card border border-border rounded-3xl gap-2 hover:border-primary/50 transition-all active:scale-95">
+              <div className="w-11 h-11 rounded-2xl bg-accent flex items-center justify-center text-primary">
+                <Sparkles className="w-5 h-5" />
               </div>
-              <span className="text-sm font-bold">{t("dashboard_ai_analysis")}</span>
+              <span className="text-xs font-bold text-center leading-tight">{t("dashboard_ai_analysis")}</span>
+            </button>
+          </Link>
+          <Link href="/dashboard/fitness" className="contents">
+            <button className="flex flex-col items-center justify-center p-4 bg-card border border-border rounded-3xl gap-2 hover:border-primary/50 transition-all active:scale-95">
+              <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <Dumbbell className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-center leading-tight">{t("fitness_title")}</span>
             </button>
           </Link>
         </div>

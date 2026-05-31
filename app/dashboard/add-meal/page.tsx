@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Salad,
@@ -11,6 +11,10 @@ import {
   X,
   Utensils,
   Lock,
+  Camera,
+  Upload,
+  ImageIcon,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n-context";
@@ -194,8 +198,165 @@ function AddMealResult({
   );
 }
 
+function PhotoAnalyzer({
+  onResult,
+}: {
+  onResult: (result: { total_kcal: number; message: string; items: { food: string; grams: number; kcal: number }[] }) => void;
+}) {
+  const { t } = useTranslation();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileChange(file: File | null) {
+    if (!file) return;
+    setSelectedFile(file);
+    setError("");
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+  }
+
+  async function handleAnalyze() {
+    if (!selectedFile) return;
+    setLoading(true);
+    setError("");
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000";
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const res = await fetch(`${apiUrl}/analyze-image`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_KCAL_TOKEN}`,
+        },
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || "error");
+      }
+      const data = await res.json();
+      onResult(data);
+    } catch {
+      setError(t("add_meal_photo_error"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function clearPhoto() {
+    setSelectedFile(null);
+    setPreview(null);
+    setError("");
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center space-y-2">
+        <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
+          <Camera className="w-7 h-7 text-primary" />
+        </div>
+        <h1 className="text-xl font-bold tracking-tight text-foreground">{t("add_meal_photo_title")}</h1>
+        <p className="text-muted-foreground text-sm">{t("add_meal_photo_subtitle")}</p>
+      </div>
+
+      {preview ? (
+        <div className="relative rounded-2xl overflow-hidden border border-border bg-card">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={preview}
+            alt="meal preview"
+            className="w-full max-h-64 object-cover"
+          />
+          <button
+            type="button"
+            onClick={clearPhoto}
+            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/60 to-transparent">
+            <p className="text-white text-xs font-medium">{t("add_meal_photo_preview")}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-3 p-6 bg-card border-2 border-dashed border-border rounded-2xl hover:border-primary hover:bg-accent/50 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Upload className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-sm font-medium text-foreground text-center">{t("add_meal_photo_upload")}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-3 p-6 bg-card border-2 border-dashed border-border rounded-2xl hover:border-primary hover:bg-accent/50 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Camera className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-sm font-medium text-foreground text-center">{t("add_meal_photo_camera")}</span>
+          </button>
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+      />
+
+      {selectedFile && (
+        <Button
+          type="button"
+          className="w-full h-14 rounded-2xl gap-2 text-base font-semibold"
+          disabled={loading}
+          onClick={handleAnalyze}
+        >
+          {loading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              {t("add_meal_photo_analyzing")}
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              {t("add_meal_photo_analyze")}
+            </>
+          )}
+        </Button>
+      )}
+
+      {error && (
+        <div className="p-4 bg-destructive/10 rounded-xl">
+          <p className="text-destructive text-sm text-center">{error}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AddMealPage() {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<"text" | "photo">("text");
   const [text, setText] = useState("");
   const [result, setResult] = useState<null | {
     total_kcal: number;
@@ -211,6 +372,12 @@ export default function AddMealPage() {
     setIsPremium(abonnement === "premium" || abonnement === "premium_plus");
   }, []);
 
+  function handleModeChange(newMode: "text" | "photo") {
+    setMode(newMode);
+    setResult(null);
+    setError("");
+  }
+
   async function handleAnalyze(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -218,7 +385,7 @@ export default function AddMealPage() {
     setResult(null);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000";
-      const res = await apiFetch(`${apiUrl}/kcal/predict`, {
+      const res = await apiFetch(`${apiUrl}/analyze`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -279,54 +446,91 @@ export default function AddMealPage() {
             </div>
           ) : isPremium === true ? (
             <>
-              <div className="text-center space-y-2">
-                <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-7 h-7 text-primary" />
-                </div>
-                <h1 className="text-xl font-bold tracking-tight text-foreground">{t("add_meal_title")}</h1>
-                <p className="text-muted-foreground text-sm">{t("add_meal_subtitle")}</p>
+              {/* Mode selector */}
+              <div className="flex bg-card border border-border rounded-2xl p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("text")}
+                  className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-sm font-medium transition-all ${
+                    mode === "text"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  {t("add_meal_mode_text")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("photo")}
+                  className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-sm font-medium transition-all ${
+                    mode === "photo"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  {t("add_meal_mode_photo")}
+                </button>
               </div>
 
-              <form onSubmit={handleAnalyze} className="space-y-4">
-                <div className="relative">
-                  <textarea
-                    className="w-full h-36 p-4 bg-card border border-border rounded-2xl text-sm resize-none placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
-                    placeholder={t("add_meal_placeholder")}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    required
-                  />
-                  <div className="absolute bottom-3 right-3 text-xs text-muted-foreground">
-                    {text.length}/500
+              {mode === "text" ? (
+                <>
+                  <div className="text-center space-y-2">
+                    <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
+                      <Sparkles className="w-7 h-7 text-primary" />
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-foreground">{t("add_meal_title")}</h1>
+                    <p className="text-muted-foreground text-sm">{t("add_meal_subtitle")}</p>
                   </div>
-                </div>
 
-                <Button
-                  type="submit"
-                  className="w-full h-14 rounded-2xl gap-2 text-base font-semibold"
-                  disabled={loading || !text.trim()}
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                      {t("add_meal_analyzing")}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      {t("add_meal_analyze")}
-                    </>
+                  <form onSubmit={handleAnalyze} className="space-y-4">
+                    <div className="relative">
+                      <textarea
+                        className="w-full h-36 p-4 bg-card border border-border rounded-2xl text-sm resize-none placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
+                        placeholder={t("add_meal_placeholder")}
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        required
+                      />
+                      <div className="absolute bottom-3 right-3 text-xs text-muted-foreground">
+                        {text.length}/500
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full h-14 rounded-2xl gap-2 text-base font-semibold"
+                      disabled={loading || !text.trim()}
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                          {t("add_meal_analyzing")}
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-5 h-5" />
+                          {t("add_meal_analyze")}
+                        </>
+                      )}
+                    </Button>
+                  </form>
+
+                  {error && (
+                    <div className="p-4 bg-destructive/10 rounded-xl">
+                      <p className="text-destructive text-sm text-center">{error}</p>
+                    </div>
                   )}
-                </Button>
-              </form>
 
-              {error && (
-                <div className="p-4 bg-destructive/10 rounded-xl">
-                  <p className="text-destructive text-sm text-center">{error}</p>
-                </div>
+                  {result && <AddMealResult result={result} />}
+                </>
+              ) : (
+                <>
+                  <PhotoAnalyzer onResult={(r) => setResult(r)} />
+                  {result && <AddMealResult result={result} />}
+                </>
               )}
-
-              {result && <AddMealResult result={result} />}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center p-20 space-y-4">
