@@ -53,17 +53,19 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-background animate-fade-in pb-20">
-      <header className="flex items-center justify-between px-5 py-5 bg-background sticky top-0 z-10">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("profile_title")}</h1>
-          <p className="text-xs text-muted-foreground">{user.email}</p>
-        </div>
-        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <UserIcon className="w-5 h-5 text-primary" />
+      <header className="px-5 py-5 bg-background sticky top-0 z-10">
+        <div className="flex items-center justify-between max-w-md mx-auto">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{t("profile_title")}</h1>
+            <p className="text-xs text-muted-foreground">{user.email}</p>
+          </div>
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <UserIcon className="w-5 h-5 text-primary" />
+          </div>
         </div>
       </header>
 
-      <div className="p-5 space-y-6">
+      <div className="p-5 space-y-6 max-w-md mx-auto w-full">
         {/* Info Utilisateur */}
         <div className="flex items-center gap-4 p-5 bg-card border border-border rounded-3xl">
           <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-primary">

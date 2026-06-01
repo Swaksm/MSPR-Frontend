@@ -24,8 +24,7 @@ export default function DashboardLayout({
   const isFormPage =
     pathname?.includes("/add-meal") ||
     pathname?.includes("/manual-meal") ||
-    pathname?.includes("/subscribe") ||
-    pathname?.includes("/fitness");
+    pathname?.includes("/subscribe");
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
