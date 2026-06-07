@@ -227,7 +227,7 @@ function PhotoAnalyzer({
       const apiUrl = process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000";
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const res = await fetch(`${apiUrl}/analyze-image`, {
+      const res = await fetch(`${apiUrl}/kcal/analyze-image`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${process.env.NEXT_PUBLIC_KCAL_TOKEN}`,
@@ -385,7 +385,7 @@ export default function AddMealPage() {
     setResult(null);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000";
-      const res = await apiFetch(`${apiUrl}/analyze`, {
+      const res = await apiFetch(`${apiUrl}/kcal/predict`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
