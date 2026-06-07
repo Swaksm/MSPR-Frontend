@@ -20,11 +20,31 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n-context";
 import { apiFetch } from "@/lib/api";
 
+type AnalyzedItem = {
+  food: string;
+  grams: number;
+  kcal: number;
+  proteines_g?: number | null;
+  glucides_g?: number | null;
+  lipides_g?: number | null;
+  fibres_g?: number | null;
+  source?: string | null;
+};
+
+type AnalyzeResult = {
+  total_kcal: number;
+  message: string;
+  items: AnalyzedItem[];
+  total_proteines_g?: number | null;
+  total_glucides_g?: number | null;
+  total_lipides_g?: number | null;
+};
+
 function AddAnalyzedMealForm({
   analyzedItems,
   onClose,
 }: {
-  analyzedItems: { food: string; grams: number; kcal: number }[];
+  analyzedItems: AnalyzedItem[];
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -136,14 +156,14 @@ function AddAnalyzedMealForm({
 function AddMealResult({
   result,
 }: {
-  result: {
-    total_kcal: number;
-    message: string;
-    items: { food: string; grams: number; kcal: number }[];
-  };
+  result: AnalyzeResult;
 }) {
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
+  const hasMacros =
+    typeof result.total_proteines_g === "number" ||
+    typeof result.total_glucides_g === "number" ||
+    typeof result.total_lipides_g === "number";
 
   return (
     <div className="mt-6 space-y-4 animate-slide-up">
@@ -164,22 +184,54 @@ function AddMealResult({
           </div>
         )}
 
+        {hasMacros && (
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Protéines", short: "P", value: result.total_proteines_g },
+              { label: "Glucides", short: "G", value: result.total_glucides_g },
+              { label: "Lipides", short: "L", value: result.total_lipides_g },
+            ].map((m) => (
+              <div key={m.short} className="rounded-xl bg-accent/60 px-3 py-2 text-center">
+                <p className="text-xs text-muted-foreground">{m.label}</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {typeof m.value === "number" ? `${m.value} g` : "—"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {Array.isArray(result.items) && result.items.length > 0 ? (
           <ul className="space-y-2 pt-2 border-t border-border">
-            {result.items.map((item, idx) => (
-              <li key={idx} className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-                    <Utensils className="w-4 h-4 text-primary" />
+            {result.items.map((item, idx) => {
+              const macros = [
+                ["P", item.proteines_g],
+                ["G", item.glucides_g],
+                ["L", item.lipides_g],
+              ].filter(([, v]) => typeof v === "number") as [string, number][];
+              return (
+                <li key={idx} className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                      <Utensils className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-medium text-foreground block truncate">{item.food}</span>
+                      {macros.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {macros.map(([k, v]) => `${k} ${v}g`).join(" · ")}
+                          {item.source === "fallback" && " · estim."}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <span className="font-medium text-foreground">{item.food}</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-foreground">{item.kcal} kcal</p>
-                  <p className="text-xs text-muted-foreground">{item.grams}g</p>
-                </div>
-              </li>
-            ))}
+                  <div className="text-right shrink-0 pl-2">
+                    <p className="text-sm font-semibold text-foreground">{item.kcal} kcal</p>
+                    <p className="text-xs text-muted-foreground">{item.grams}g</p>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="text-muted-foreground text-sm">{t("add_meal_no_food")}</p>
@@ -201,7 +253,7 @@ function AddMealResult({
 function PhotoAnalyzer({
   onResult,
 }: {
-  onResult: (result: { total_kcal: number; message: string; items: { food: string; grams: number; kcal: number }[] }) => void;
+  onResult: (result: AnalyzeResult) => void;
 }) {
   const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -358,11 +410,7 @@ export default function AddMealPage() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<"text" | "photo">("text");
   const [text, setText] = useState("");
-  const [result, setResult] = useState<null | {
-    total_kcal: number;
-    message: string;
-    items: { food: string; grams: number; kcal: number }[];
-  }>(null);
+  const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isPremium, setIsPremium] = useState<boolean | null>(null);

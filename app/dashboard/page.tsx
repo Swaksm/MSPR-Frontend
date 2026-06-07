@@ -86,7 +86,10 @@ export default function Dashboard() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [router]);
+    // Exécuté une seule fois au montage : router.replace est stable, et le
+    // garder en dépendance relançait l'effet à chaque render (boucle de fetch).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!mounted) return null;
 

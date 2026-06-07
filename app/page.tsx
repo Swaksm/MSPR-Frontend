@@ -9,7 +9,8 @@ export default function Home() {
   useEffect(() => {
     const userId = localStorage.getItem("user_id")
     router.replace(userId ? "/dashboard" : "/login")
-  }, [router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return null
 }
