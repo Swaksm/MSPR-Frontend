@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { LogOut, RefreshCw, AlertTriangle, CheckCircle2, Database, Users, Salad, Dumbbell, BarChart3 } from "lucide-react"
@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [anomalies, setAnomalies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [runningEtl, setRunningEtl] = useState(false)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (localStorage.getItem("user_role") !== "admin") {
@@ -41,6 +42,7 @@ export default function AdminPage() {
       return
     }
     load()
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current) }
   }, [])
 
   async function load() {
@@ -58,11 +60,30 @@ export default function AdminPage() {
     setLoading(false)
   }
 
-  async function triggerEtl() {
+  function startEtlPolling() {
+    if (pollingRef.current) clearInterval(pollingRef.current)
     setRunningEtl(true)
+    pollingRef.current = setInterval(async () => {
+      try {
+        const status = await adminApi.etlStatus()
+        setEtl(status)
+        if (!status.en_cours) {
+          clearInterval(pollingRef.current!)
+          pollingRef.current = null
+          setRunningEtl(false)
+          await load()
+        }
+      } catch {
+        clearInterval(pollingRef.current!)
+        pollingRef.current = null
+        setRunningEtl(false)
+      }
+    }, 3000)
+  }
+
+  async function triggerEtl() {
     try { await adminApi.etlRun() } catch {}
-    setTimeout(load, 2000)
-    setRunningEtl(false)
+    startEtlPolling()
   }
 
   const stats = quality?.statistiques
