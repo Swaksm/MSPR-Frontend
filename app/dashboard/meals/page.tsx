@@ -58,7 +58,7 @@ export default function MealsPage() {
   useEffect(() => {
     setLoading(true);
     const userId = localStorage.getItem("user_id") || "1";
-    apiFetch(`http://localhost:8003/users/${userId}/meals`)
+    apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/meals`)
       .then((res) => res.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : (data.meals ?? data.items ?? []);
@@ -77,7 +77,7 @@ export default function MealsPage() {
   const handleDelete = async (mealId: number) => {
     setDeleting(true);
     try {
-      const res = await apiFetch(`http://localhost:8003/meals/${mealId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/meals/${mealId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setMeals((prev) => prev.filter((m) => m.id !== mealId));
       setShowPopup(false);

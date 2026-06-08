@@ -54,7 +54,7 @@ export default function SubscribePage() {
     setLoading(true);
     const userId = localStorage.getItem("user_id");
     try {
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/subscription`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/subscription`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ abonnement: selectedPlan }),
@@ -75,7 +75,7 @@ export default function SubscribePage() {
     setCancelLoading(true);
     const userId = localStorage.getItem("user_id");
     try {
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/subscription`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/subscription`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ abonnement: "freemium" }),

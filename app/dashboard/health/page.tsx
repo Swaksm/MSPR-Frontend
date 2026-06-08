@@ -45,7 +45,7 @@ export default function HealthDashboardPage() {
   async function fetchMetrics(userId: string) {
     try {
       setLoading(true);
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/metrics`);
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/metrics`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       const formattedData = data.map((m: any) => ({

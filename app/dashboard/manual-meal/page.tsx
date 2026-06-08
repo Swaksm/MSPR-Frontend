@@ -44,7 +44,7 @@ export default function ManualMealPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
-    apiFetch("http://localhost:8003/aliments")
+    apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/aliments`)
       .then((res) => res.json())
       .then((data) => setAliments(data))
       .catch(() => setError(t("manual_load_error")));
@@ -81,7 +81,7 @@ export default function ManualMealPage() {
     setLoading(true);
     try {
       const userId = localStorage.getItem("user_id") || "1";
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/meals`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/meals`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type_repas: typeRepas, date_repas: dateRepas, notes, items }),

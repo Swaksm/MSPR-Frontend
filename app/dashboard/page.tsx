@@ -77,8 +77,8 @@ export default function Dashboard() {
     setAbonnement(localStorage.getItem("user_abonnement") || "freemium");
 
     Promise.all([
-      apiFetch(`http://localhost:8003/users/${userId}/meals`).then((r) => r.json()),
-      apiFetch(`http://localhost:8003/users/${userId}/objectives`).then((r) => r.json()),
+      apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/meals`).then((r) => r.json()),
+      apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/objectives`).then((r) => r.json()),
     ])
       .then(([mealsData, objData]) => {
         setMeals(Array.isArray(mealsData) ? mealsData : []);

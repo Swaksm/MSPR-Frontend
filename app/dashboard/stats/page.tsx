@@ -143,8 +143,8 @@ export default function StatsPage() {
     if (!userId) { setLoading(false); return; }
 
     Promise.all([
-      apiFetch(`http://localhost:8003/users/${userId}/meals`).then((r) => r.json()),
-      apiFetch(`http://localhost:8003/users/${userId}/metrics`).then((r) => r.json()),
+      apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/meals`).then((r) => r.json()),
+      apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/metrics`).then((r) => r.json()),
     ])
       .then(([mealsData, metricsData]) => {
         setMeals(Array.isArray(mealsData) ? mealsData : []);
@@ -167,7 +167,7 @@ export default function StatsPage() {
       if (formSommeil) body.heures_sommeil = Number(formSommeil);
       if (formBpm) body.bpm_repos = Number(formBpm);
 
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/metrics`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/metrics`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

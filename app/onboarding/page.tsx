@@ -63,12 +63,12 @@ export default function OnboardingPage() {
 
     if (userId && selectedObjective) {
       try {
-        const availRes = await apiFetch(`http://localhost:8003/objectifs`);
+        const availRes = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/objectifs`);
         if (availRes.ok) {
           const available: { id: number; libelle: string }[] = await availRes.json();
           const match = available.find((o) => o.libelle === selectedObjective);
           if (match) {
-            await apiFetch(`http://localhost:8003/users/${userId}/objectives`, {
+            await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/objectives`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ objectif_id: match.id }),

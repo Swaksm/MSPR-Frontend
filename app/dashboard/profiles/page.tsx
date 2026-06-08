@@ -35,7 +35,7 @@ export default function ProfilePage() {
     setDeleting(true);
     setDeleteError("");
     try {
-      const res = await apiFetch(`http://localhost:8003/users/${userId}`, { method: "DELETE" });
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       localStorage.clear();
       router.push("/login");

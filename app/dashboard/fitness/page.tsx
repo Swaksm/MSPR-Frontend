@@ -73,7 +73,7 @@ export default function FitnessPage() {
     setLoading(true);
     setError("");
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_RECOMMENDATION_API_URL || "http://localhost:8006";
+      const apiUrl = process.env.NEXT_PUBLIC_RECOMMENDATION_API_URL || "http://localhost:8000";
       const apiKey = process.env.NEXT_PUBLIC_RECOMMENDATION_API_KEY || "";
 
       const body: Record<string, unknown> = {

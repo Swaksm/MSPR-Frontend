@@ -68,7 +68,7 @@ function AddAnalyzedMealForm({
         quantite_g: item.grams,
         calories_100g: item.kcal && item.grams ? Math.round((item.kcal / item.grams) * 100) : 0,
       }));
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/meals`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/meals`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type_repas: typeRepas, date_repas: dateRepas, notes, items }),

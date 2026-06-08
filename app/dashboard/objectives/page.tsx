@@ -55,8 +55,8 @@ export default function ObjectivesPage() {
     try {
       setLoading(true);
       const [objRes, availRes] = await Promise.all([
-        apiFetch(`http://localhost:8003/users/${userId}/objectives`),
-        apiFetch(`http://localhost:8003/objectifs`),
+        apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/objectives`),
+        apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/objectifs`),
       ]);
       if (!objRes.ok || !availRes.ok) throw new Error();
       setObjectives(await objRes.json());
@@ -73,7 +73,7 @@ export default function ObjectivesPage() {
     if (!userId) return;
     setAdding(true);
     try {
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/objectives`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/objectives`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ objectif_id: objectifId }),
@@ -94,7 +94,7 @@ export default function ObjectivesPage() {
     if (!userId) return;
     setToggling(obj.id);
     try {
-      const res = await apiFetch(`http://localhost:8003/users/${userId}/objectives/${obj.id}`, {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000"}/meal/users/${userId}/objectives/${obj.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ actif: !obj.actif }),
