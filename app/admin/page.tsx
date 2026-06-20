@@ -24,10 +24,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-const AUTH_API_URL = "http://localhost:8000/auth";
-const MEAL_API_URL = "http://localhost:8000/meal";
-const ADMIN_API_URL = "http://localhost:8000/admin";
-const LOGS_API_URL = "http://localhost:8005";
+const BASE_URL = process.env.NEXT_PUBLIC_JARMY_API_URL || "http://localhost:8000";
+const AUTH_API_URL = `${BASE_URL}/auth`;
+const MEAL_API_URL = `${BASE_URL}/meal`;
+const ADMIN_API_URL = `${BASE_URL}/admin`;
+const LOGS_API_URL = `${BASE_URL}`;
 
 interface Meal {
   id: number;
