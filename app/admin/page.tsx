@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Salad, Users, Utensils, Trash2, LogOut, ChevronRight, ChevronDown, 
-  Calendar, Ruler, Weight, BadgeInfo, Database, Crown, TrendingUp, 
+import {
+  Salad, Users, Utensils, Trash2, LogOut, ChevronRight, ChevronDown,
+  Calendar, Ruler, Weight, BadgeInfo, Database, Crown, TrendingUp,
   Zap, PieChart, Activity, Search, ShieldCheck, FileText, ExternalLink,
   AlertTriangle, CheckCircle, Download, RefreshCw, Edit3, Play, X,
-  CheckCircle2, Gauge, History
+  CheckCircle2, Gauge, History, ScrollText, Filter
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { toast } from "sonner";
 const AUTH_API_URL = "http://localhost:8000/auth";
 const MEAL_API_URL = "http://localhost:8000/meal";
 const ADMIN_API_URL = "http://localhost:8000/admin";
+const LOGS_API_URL = "http://localhost:8000/logs";
 
 interface Meal {
   id: number;
@@ -49,6 +50,19 @@ interface User {
   taille_cm?: number;
   actif: boolean;
   meals?: Meal[];
+}
+
+interface ActivityLog {
+  id: string;
+  user_id: number;
+  action: string;
+  detail: Record<string, any> | null;
+  timestamp: string;
+}
+
+interface LogStats {
+  action: string;
+  count: number;
 }
 
 interface GlobalStats {
@@ -101,7 +115,7 @@ export default function AdminPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   
-  const [activeTab, setActiveTab] = useState<"users" | "data">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "data" | "mongodb">("users");
   
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<GlobalStats | null>(null);
@@ -111,6 +125,11 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedUser, setExpandedUser] = useState<number | null>(null);
   const [selectedLog, setSelectedLog] = useState<string | null>(null);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [logStats, setLogStats] = useState<LogStats[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logFilterAction, setLogFilterAction] = useState("");
+  const [logFilterUser, setLogFilterUser] = useState("");
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -145,6 +164,25 @@ export default function AdminPage() {
       toast.error("Erreur de connexion au serveur");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchActivityLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: "100" });
+      if (logFilterUser) params.set("user_id", logFilterUser);
+      if (logFilterAction) params.set("action", logFilterAction);
+      const [logsRes, statsRes] = await Promise.all([
+        fetch(`${LOGS_API_URL}/logs?${params}`),
+        fetch(`${LOGS_API_URL}/logs/stats${logFilterUser ? `?user_id=${logFilterUser}` : ""}`)
+      ]);
+      if (logsRes.ok) setActivityLogs(await logsRes.json());
+      if (statsRes.ok) setLogStats(await statsRes.json());
+    } catch {
+      toast.error("Service MongoDB injoignable");
+    } finally {
+      setLogsLoading(false);
     }
   };
 
@@ -450,10 +488,134 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('data')} className={`pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'data' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
             Contrôle Qualité & ETL
           </button>
+          <button onClick={() => { setActiveTab('mongodb'); fetchActivityLogs(); }} className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === 'mongodb' ? 'border-green-600 text-green-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            <ScrollText className="w-3.5 h-3.5" />
+            Activité MongoDB
+          </button>
           <Link href="/admin/analytics">
             <button className="pb-3 text-sm font-bold border-b-2 transition-colors border-transparent text-slate-500 hover:text-slate-800">Analytics Avancés</button>
           </Link>
         </div>
+
+        {activeTab === 'mongodb' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-2">
+                  <ScrollText className="w-6 h-6 text-green-600" />
+                  Activité MongoDB
+                </h2>
+                <p className="text-slate-500 text-sm">Logs d'activité en temps réel — base NoSQL <span className="font-bold text-green-600">healthai_logs</span></p>
+              </div>
+              <Button onClick={fetchActivityLogs} disabled={logsLoading} variant="outline" className="gap-2 rounded-xl border-slate-200">
+                <RefreshCw className={`w-4 h-4 ${logsLoading ? 'animate-spin' : ''}`} />
+                Actualiser
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {logStats.slice(0, 4).map((s) => (
+                <Card key={s.action} className="border-none shadow-sm bg-white overflow-hidden">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-50">
+                      <Activity className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-slate-800 tracking-tighter">{s.count}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{s.action.replace(/_/g, ' ')}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="border-none shadow-sm bg-white overflow-hidden">
+              <CardHeader className="border-b border-slate-100 pb-4">
+                <div className="flex flex-col md:flex-row md:items-center gap-3">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 flex-1">
+                    <Database className="w-4 h-4 text-green-600" />
+                    Collection <span className="font-mono text-green-700 bg-green-50 px-2 py-0.5 rounded-lg text-xs">activity_logs</span>
+                    <span className="ml-auto text-xs font-normal text-slate-400">{activityLogs.length} documents</span>
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                      <Input
+                        placeholder="user_id..."
+                        className="pl-8 h-8 w-28 text-xs rounded-lg border-slate-200"
+                        value={logFilterUser}
+                        onChange={(e) => setLogFilterUser(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && fetchActivityLogs()}
+                      />
+                    </div>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                      <Input
+                        placeholder="action..."
+                        className="pl-8 h-8 w-32 text-xs rounded-lg border-slate-200"
+                        value={logFilterAction}
+                        onChange={(e) => setLogFilterAction(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && fetchActivityLogs()}
+                      />
+                    </div>
+                    <Button size="sm" onClick={fetchActivityLogs} className="h-8 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-xs">Filtrer</Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {logsLoading ? (
+                  <div className="py-16 flex items-center justify-center gap-3 text-slate-400">
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span className="text-sm">Lecture MongoDB...</span>
+                  </div>
+                ) : activityLogs.length === 0 ? (
+                  <div className="py-16 text-center text-slate-400 italic text-sm">
+                    Aucun log trouvé — les actions des utilisateurs apparaîtront ici
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-[10px] text-slate-400 uppercase font-black bg-slate-50/50 border-b border-slate-100">
+                        <tr>
+                          <th className="px-4 py-3">Document ID</th>
+                          <th className="px-4 py-3">User</th>
+                          <th className="px-4 py-3">Action</th>
+                          <th className="px-4 py-3">Détails</th>
+                          <th className="px-4 py-3">Timestamp</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activityLogs.map((log) => (
+                          <tr key={log.id} className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors">
+                            <td className="px-4 py-3 font-mono text-[10px] text-slate-400 max-w-[120px] truncate">{log.id}</td>
+                            <td className="px-4 py-3">
+                              <span className="bg-blue-50 text-blue-700 font-bold text-xs px-2 py-0.5 rounded-lg">#{log.user_id}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <ActionBadge action={log.action} />
+                            </td>
+                            <td className="px-4 py-3 max-w-[200px]">
+                              {log.detail ? (
+                                <span className="font-mono text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded truncate block">
+                                  {JSON.stringify(log.detail)}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 text-xs italic">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
+                              {new Date(log.timestamp).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {activeTab === 'users' ? (
           <div className="space-y-4 animate-in fade-in duration-500">
@@ -682,6 +844,23 @@ function UserDetailItem({ icon, label, value, children, capitalize }: { icon: Re
       <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{icon}<span>{label}</span></div>
       {children ? children : (<p className={`text-sm font-bold text-slate-700 ${capitalize ? 'capitalize' : ''}`}>{value}</p>)}
     </div>
+  );
+}
+
+function ActionBadge({ action }: { action: string }) {
+  const colors: Record<string, string> = {
+    login: "bg-blue-100 text-blue-700",
+    logout: "bg-slate-100 text-slate-600",
+    add_meal: "bg-green-100 text-green-700",
+    search_food: "bg-purple-100 text-purple-700",
+    update_profile: "bg-amber-100 text-amber-700",
+    delete_meal: "bg-red-100 text-red-700",
+  };
+  const color = colors[action] ?? "bg-slate-100 text-slate-600";
+  return (
+    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${color}`}>
+      {action.replace(/_/g, ' ')}
+    </span>
   );
 }
 
