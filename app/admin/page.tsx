@@ -27,7 +27,7 @@ import { toast } from "sonner";
 const AUTH_API_URL = "http://localhost:8000/auth";
 const MEAL_API_URL = "http://localhost:8000/meal";
 const ADMIN_API_URL = "http://localhost:8000/admin";
-const LOGS_API_URL = "http://localhost:8000/logs";
+const LOGS_API_URL = "http://localhost:8005";
 
 interface Meal {
   id: number;
